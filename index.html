@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ren × Tim AI — Kantor Ren</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root{
+    --cream:#FFF6E9; --cream2:#FDEED3; --orange:#F5820B; --orange-d:#D96C00;
+    --amber:#FFB347; --brown:#5B3A1E; --brown2:#8A5A2B; --ink:#2E1F10;
+    --green:#2E9E5B; --red:#D93025; --card:#FFFFFF; --line:#F0D9B5;
+  }
+  body{
+    background:#3A2A1A; font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+    display:flex; justify-content:center; padding:18px 10px; color:var(--ink);
+  }
+  .stage{
+    width:min(100%, 760px); aspect-ratio: 4 / 5; max-height: 95vh;
+    background:linear-gradient(180deg,#FFF8EC 0%, #FDEFD4 55%, #FBE3BC 100%);
+    border-radius:22px; overflow:hidden; position:relative;
+    box-shadow:0 24px 60px rgba(0,0,0,.45); display:flex; flex-direction:column;
+    padding:16px 16px 12px;
+  }
+  /* ---------- header ---------- */
+  header{ text-align:center; }
+  .title{ font-size:clamp(30px,5.2vw,44px); font-weight:900; letter-spacing:-.5px; color:var(--brown); }
+  .title .x{ color:var(--orange); }
+  .subtitle{ font-size:clamp(13px,2vw,17px); color:var(--brown2); font-weight:600; margin-top:2px; }
+  .chips{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-top:10px; }
+  .chip{
+    background:#fff; border:2px solid var(--line); color:var(--brown);
+    font-size:12px; font-weight:700; padding:5px 10px; border-radius:999px;
+    transition:all .3s;
+  }
+  .chip.on{ background:var(--orange); border-color:var(--orange); color:#fff; transform:scale(1.07); box-shadow:0 4px 10px rgba(245,130,11,.4); }
+  .chip.done{ background:#E7F6EC; border-color:var(--green); color:var(--green); }
+  .chip .arr{ color:var(--amber); margin-left:2px; }
+  .chip.on .arr, .chip.done .arr{ color:inherit; }
+
+  /* ---------- main area ---------- */
+  .main{ display:grid; grid-template-columns: 200px 1fr; gap:12px; margin-top:12px; flex:1; min-height:0; }
+  /* boss room */
+  .boss{
+    background:linear-gradient(180deg,#FFE9C2,#FFDFA6); border:2px solid #F5C97E;
+    border-radius:16px; padding:10px; display:flex; flex-direction:column; align-items:center;
+    position:relative; overflow:hidden;
+  }
+  .boss h2{ font-size:14px; letter-spacing:1px; color:var(--brown); text-transform:uppercase; }
+  .boss .note{ font-size:11px; color:var(--brown2); text-align:center; margin-top:4px; line-height:1.35; }
+  .boss-say{
+    margin-top:8px; background:#fff; border-radius:12px; padding:7px 9px; font-size:12.5px;
+    font-weight:700; color:var(--brown); position:relative; min-height:34px; width:100%;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+  }
+  .boss-say::after{ content:""; position:absolute; bottom:-7px; left:50%; transform:translateX(-50%);
+    border:7px solid transparent; border-top-color:#fff; border-bottom:0; }
+  .desk{ margin-top:14px; width:100%; display:flex; flex-direction:column; align-items:center; }
+  .laptop{ width:74px; height:48px; background:#4A3220; border-radius:7px 7px 0 0; position:relative; }
+  .laptop::before{ content:""; position:absolute; inset:6px; background:linear-gradient(135deg,#7FD4FF,#2E9E5B); border-radius:4px; }
+  .laptop::after{ content:""; position:absolute; bottom:-8px; left:-14px; right:-14px; height:8px; background:#6B4A2E; border-radius:4px; }
+  .approve-box{
+    margin-top:14px; width:100%; background:#fff; border:2px dashed var(--orange);
+    border-radius:10px; padding:8px 6px; text-align:center; min-height:64px; position:relative;
+  }
+  .approve-box .lbl{ font-size:10px; font-weight:800; letter-spacing:1px; color:var(--orange-d); text-transform:uppercase; }
+  .approve-box .item{ font-size:12px; font-weight:700; color:var(--brown); margin-top:5px; line-height:1.3; }
+  .approve-box .empty{ font-size:11.5px; color:#B99B78; margin-top:5px; }
+  .stamp{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-14deg) scale(0);
+    border:3px solid var(--red); color:var(--red); font-weight:900; font-size:15px;
+    letter-spacing:2px; padding:3px 10px; border-radius:6px; background:rgba(255,255,255,.85);
+    transition:transform .25s cubic-bezier(.2,2.2,.4,1); pointer-events:none;
+  }
+  .stamp.show{ transform:translate(-50%,-50%) rotate(-14deg) scale(1); }
+
+  /* departments */
+  .depts{ display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(3,1fr); gap:10px; min-height:0; }
+  .dept{
+    background:var(--card); border:2px solid var(--line); border-radius:14px; padding:8px 10px;
+    display:flex; flex-direction:column; position:relative; transition:border-color .3s, box-shadow .3s;
+    min-height:0;
+  }
+  .dept.active{ border-color:var(--orange); box-shadow:0 6px 16px rgba(245,130,11,.25); }
+  .dept.done{ border-color:var(--green); }
+  .dept.rework{ border-color:var(--red); box-shadow:0 6px 16px rgba(217,48,37,.2); }
+  .dept-head{ display:flex; align-items:center; gap:8px; }
+  .dept-name{ font-size:13.5px; font-weight:800; color:var(--brown); line-height:1.15; }
+  .dept-sub{ font-size:10.5px; color:var(--brown2); line-height:1.2; }
+  .badge{
+    margin-left:auto; font-size:9.5px; font-weight:800; letter-spacing:.5px; padding:3px 7px;
+    border-radius:999px; background:#F3E6CF; color:#A9835A; white-space:nowrap;
+  }
+  .badge.working{ background:#FFE3C2; color:var(--orange-d); }
+  .badge.done{ background:#DDF3E4; color:var(--green); }
+  .badge.wait{ background:#F3E6CF; color:#A9835A; }
+  .badge.back{ background:#FBE3E1; color:var(--red); }
+  .badge.new{ background:#FFE9F3; color:#C2185B; }
+  .bubble{
+    margin-top:7px; background:var(--cream2); border-radius:10px; padding:6px 8px;
+    font-size:12px; font-weight:600; color:var(--ink); min-height:30px; line-height:1.3;
+  }
+  .meter{ margin-top:auto; padding-top:6px; }
+  .meter-row{ display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:var(--brown2); }
+  .bar{ height:7px; background:#F3E6CF; border-radius:99px; overflow:hidden; margin-top:3px; }
+  .bar i{ display:block; height:100%; width:0%; background:var(--orange); border-radius:99px; transition:width .25s linear; }
+  .dept.done .bar i{ background:var(--green); }
+  .dept.rework .bar i{ background:var(--red); }
+
+  /* ---------- characters (pure CSS) ---------- */
+  .char{ width:46px; height:46px; flex:none; position:relative; }
+  .char .head{
+    width:40px; height:36px; border-radius:50% 50% 46% 46%; position:absolute; left:3px; top:4px;
+  }
+  .char .eye{ width:5px; height:7px; background:#2E1F10; border-radius:50%; position:absolute; top:16px; }
+  .char .eye.l{ left:13px; } .char .eye.r{ right:13px; }
+  .char .smile{ width:10px; height:5px; border:2px solid #2E1F10; border-top:0; border-left:0; border-right:0;
+    border-radius:0 0 10px 10px; position:absolute; top:25px; left:18px; }
+  .char .band{ position:absolute; top:2px; left:2px; right:2px; height:12px; border:3px solid #4A3220;
+    border-bottom:0; border-radius:20px 20px 0 0; }
+  .char .cup{ width:9px; height:13px; background:#4A3220; border-radius:4px; position:absolute; top:12px; }
+  .char .cup.l{ left:-1px; } .char .cup.r{ right:-1px; }
+  .char .body{ width:44px; height:12px; border-radius:6px 6px 0 0; position:absolute; bottom:0; left:1px; }
+  .c-orange .head{ background:#FFB347; } .c-orange .body{ background:#F5820B; }
+  .c-green .head{ background:#7ED491; } .c-green .body{ background:#2E9E5B; }
+  .c-blue .head{ background:#8FD0F5; } .c-blue .body{ background:#2E7FC2; }
+  .c-pink .head{ background:#FFB3C7; } .c-pink .body{ background:#D64570; }
+  .c-purple .head{ background:#C9A7F5; } .c-purple .body{ background:#7A4FD0; }
+  .c-teal .head{ background:#7ED9C9; } .c-teal .body{ background:#1F9E8A; }
+  .c-boss .head{ background:#FFD9A0; } .c-boss .body{ background:#5B3A1E; }
+  .char.boss-char{ width:56px; height:56px; }
+  .char.boss-char .head{ width:48px; height:44px; left:4px; top:4px; }
+  .char.boss-char .eye{ top:19px; } .char.boss-char .eye.l{ left:16px; } .char.boss-char .eye.r{ right:16px; }
+  .char.boss-char .smile{ top:30px; left:23px; }
+  .char.boss-char .body{ width:54px; height:14px; left:1px; }
+
+  /* ---------- bottom ---------- */
+  .bottom{ margin-top:12px; display:grid; grid-template-columns: 1.25fr 1fr; gap:12px; }
+  .log, .stats{ background:#fff; border:2px solid var(--line); border-radius:14px; padding:9px 11px; }
+  .log h3, .stats h3{ font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--orange-d); margin-bottom:6px; }
+  .log ul{ list-style:none; font-size:12px; line-height:1.5; color:var(--ink); min-height:66px; }
+  .log li{ opacity:0; transform:translateY(4px); transition:opacity .3s, transform .3s; }
+  .log li.show{ opacity:1; transform:none; }
+  .log li .ok{ color:var(--green); font-weight:800; }
+  .log li .bad{ color:var(--red); font-weight:800; }
+  .log li .go{ color:var(--orange-d); font-weight:800; }
+  .stat-row{ display:flex; justify-content:space-between; font-size:12px; padding:2.5px 0; border-bottom:1px dashed #F0D9B5; }
+  .stat-row:last-child{ border-bottom:0; }
+  .stat-row .v{ font-weight:800; color:var(--brown); }
+  .stat-row .v b{ color:var(--orange-d); }
+  .stats .src{ font-size:10px; color:#A9835A; margin-top:5px; }
+  .footer{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+  .footer .meta{ font-size:11.5px; color:var(--brown2); font-weight:600; }
+  .replay{
+    border:0; background:var(--orange); color:#fff; font-weight:800; font-size:13px;
+    padding:8px 16px; border-radius:999px; cursor:pointer; box-shadow:0 4px 12px rgba(245,130,11,.4);
+  }
+  .replay:hover{ background:var(--orange-d); }
+  .progress-track{ height:5px; background:#F3E6CF; border-radius:99px; margin-top:9px; overflow:hidden; }
+  .progress-track i{ display:block; height:100%; width:0%; background:var(--orange); }
+  @media (max-width:560px){
+    .main{ grid-template-columns:1fr; }
+    .boss{ flex-direction:row; flex-wrap:wrap; gap:8px; }
+    .boss h2{ width:100%; text-align:center; }
+    .boss .note{ display:none; }
+    .boss-say{ flex:1; min-width:120px; margin-top:0; }
+    .desk{ display:none; }
+    .approve-box{ flex:1; min-width:130px; margin-top:0; }
+    .bottom{ grid-template-columns:1fr; }
+    .stage{ aspect-ratio:auto; }
+  }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <header>
+    <div class="title">Ren <span class="x">×</span> Tim AI</div>
+    <div class="subtitle">Bos cuma approve aja. Tim Ren yang kerja bareng.</div>
+    <div class="chips" id="chips">
+      <span class="chip" data-step="riset">Riset</span>
+      <span class="chip" data-step="banding">Bandingin</span>
+      <span class="chip" data-step="produksi">Produksi</span>
+      <span class="chip" data-step="review">Review</span>
+      <span class="chip" data-step="analisa">Analisa</span>
+      <span class="chip" data-step="perbaikan">Perbaikan</span>
+    </div>
+  </header>
+
+  <div class="main">
+    <!-- RUANG BOS -->
+    <section class="boss">
+      <h2>Ruang Bos</h2>
+      <div class="note">Tiap departemen kerja, terakhir bos yang cek.</div>
+      <div class="boss-say" id="bossSay">Hari ini juga gas! 💪</div>
+      <div class="desk">
+        <div class="char c-boss boss-char">
+          <div class="band"></div><div class="head"></div>
+          <div class="cup l"></div><div class="cup r"></div>
+          <div class="eye l"></div><div class="eye r"></div><div class="smile"></div>
+          <div class="body"></div>
+        </div>
+        <div class="laptop"></div>
+      </div>
+      <div class="approve-box" id="approveBox">
+        <div class="lbl">Kotak Approval</div>
+        <div class="empty" id="approveEmpty">Draft yang lolos masuk ke sini</div>
+        <div class="item" id="approveItem" style="display:none">Draft Kisah Nabi<br>“Nabi Hud AS” — lolos QC</div>
+        <div class="stamp" id="stamp">APPROVED</div>
+      </div>
+    </section>
+
+    <!-- DEPARTEMEN -->
+    <section class="depts" id="depts">
+      <div class="dept" id="d-riset">
+        <div class="dept-head">
+          <div class="char c-orange"><div class="band"></div><div class="head"></div><div class="cup l"></div><div class="cup r"></div><div class="eye l"></div><div class="eye r"></div><div class="smile"></div><div class="body"></div></div>
+          <div><div class="dept-name">Riset</div><div class="dept-sub">Cari niche &amp; referensi</div></div>
+          <span class="badge wait">MENUNGGU</span>
+        </div>
+        <div class="bubble">…</div>
+        <div class="meter"><div class="meter-row"><span class="count">0 ide</span><span class="pct">0%</span></div><div class="bar"><i></i></div></div>
+      </div>
+
+      <div class="dept" id="d-banding">
+        <div class="dept-head">
+          <div class="char c-green"><div class="band"></div><div class="head"></div><div class="cup l"></div><div class="cup r"></div><div class="eye l"></div><div class="eye r"></div><div class="smile"></div><div class="body"></div></div>
+          <div><div class="dept-name">Bandingin</div><div class="dept-sub">Aturan 60% — harus lolos</div></div>
+          <span class="badge wait">MENUNGGU</span>
+        </div>
+        <div class="bubble">…</div>
+        <div class="meter"><div class="meter-row"><span class="count">0 kandidat</span><span class="pct">0%</span></div><div class="bar"><i></i></div></div>
+      </div>
+
+      <div class="dept" id="d-produksi">
+        <div class="dept-head">
+          <div class="char c-blue"><div class="band"></div><div class="head"></div><div class="cup l"></div><div class="cup r"></div><div class="eye l"></div><div class="eye r"></div><div class="smile"></div><div class="body"></div></div>
+          <div><div class="dept-name">Produksi</div><div class="dept-sub">Video Kisah Nabi / Garuda</div></div>
+          <span class="badge wait">MENUNGGU</span>
+        </div>
+        <div class="bubble">…</div>
+        <div class="meter"><div class="meter-row"><span class="count">0 kata</span><span class="pct">0%</span></div><div class="bar"><i></i></div></div>
+      </div>
+
+      <div class="dept" id="d-review">
+        <div class="dept-head">
+          <div class="char c-pink"><div class="band"></div><div class="head"></div><div class="cup l"></div><div class="cup r"></div><div class="eye l"></div><div class="eye r"></div><div class="smile"></div><div class="body"></div></div>
+          <div><div class="dept-name">Reviewer Galak</div><div class="dept-sub">QC hook, skor ≥ 20/25</div></div>
+          <span class="badge new">NEW</span>
+        </div>
+        <div class="bubble">…</div>
+        <div class="meter"><div class="meter-row"><span class="count">0 kelemahan</span><span class="pct">0%</span></div><div class="bar"><i></i></div></div>
+      </div>
+
+      <div class="dept" id="d-analisa">
+        <div class="dept-head">
+          <div class="char c-purple"><div class="band"></div><div class="head"></div><div class="cup l"></div><div class="cup r"></div><div class="eye l"></div><div class="eye r"></div><div class="smile"></div><div class="body"></div></div>
+          <div><div class="dept-name">Analisa</div><div class="dept-sub">Views, retensi, subs</div></div>
+          <span class="badge wait">MENUNGGU</span>
+        </div>
+        <div class="bubble">…</div>
+        <div class="meter"><div class="meter-row"><span class="count">0 angka</span><span class="pct">0%</span></div><div class="bar"><i></i></div></div>
+      </div>
+
+      <div class="dept" id="d-perbaikan">
+        <div class="dept-head">
+          <div class="char c-teal"><div class="band"></div><div class="head"></div><div class="cup l"></div><div class="cup r"></div><div class="eye l"></div><div class="eye r"></div><div class="smile"></div><div class="body"></div></div>
+          <div><div class="dept-name">Perbaikan</div><div class="dept-sub">Catatan buat besok</div></div>
+          <span class="badge wait">MENUNGGU</span>
+        </div>
+        <div class="bubble">…</div>
+        <div class="meter"><div class="meter-row"><span class="count">0 catatan</span><span class="pct">0%</span></div><div class="bar"><i></i></div></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- BOTTOM -->
+  <div class="bottom">
+    <div class="log">
+      <h3>📋 Log Progress</h3>
+      <ul id="logList"></ul>
+    </div>
+    <div class="stats">
+      <h3>📊 Hasil Asli — 23 Nov 2026</h3>
+      <div class="stat-row"><span>Kisah Nabi Adam</span><span class="v"><b id="s-adam">0</b> views · 9 likes · +3 subs</span></div>
+      <div class="stat-row"><span>Kisah Nabi Idris</span><span class="v"><b id="s-idris">0</b> views · 5 likes</span></div>
+      <div class="stat-row"><span>Garuda — Malen</span><span class="v"><b id="s-malen">0</b> views · 34,2% ditonton</span></div>
+      <div class="stat-row"><span>Garuda — Leeds</span><span class="v"><b id="s-leeds">0</b> views</span></div>
+      <div class="src">Angka nyata dari YouTube Studio, dicek 23 Nov 2026 08:05 WIB. Tanpa angka penjualan.</div>
+    </div>
+  </div>
+
+  <div class="progress-track"><i id="loopBar"></i></div>
+  <div class="footer">
+    <span class="meta">15 detik • tanpa suara • loop otomatis</span>
+    <button class="replay" id="replayBtn">↻ Putar Ulang</button>
+  </div>
+</div>
+
+<script>
+const LOOP = 15000; // 15 detik
+const $ = id => document.getElementById(id);
+
+function setDept(key, state){
+  const el = $('d-'+key);
+  const badge = el.querySelector('.badge');
+  const bubble = el.querySelector('.bubble');
+  const count = el.querySelector('.count');
+  const pct = el.querySelector('.pct');
+  const bar = el.querySelector('.bar i');
+  el.classList.remove('active','done','rework');
+  badge.className = 'badge';
+  if(state.cls) el.classList.add(state.cls);
+  if(state.badge){ badge.textContent = state.badge; badge.classList.add(state.badgeCls || 'working'); }
+  if(state.bubble !== undefined) bubble.textContent = state.bubble;
+  if(state.count !== undefined) count.textContent = state.count;
+  if(state.pct !== undefined){ pct.textContent = state.pct + '%'; bar.style.width = state.pct + '%'; }
+}
+function setChip(step, mode){
+  const c = document.querySelector('.chip[data-step="'+step+'"]');
+  c.classList.remove('on','done');
+  if(mode) c.classList.add(mode);
+}
+function bossSay(t){ $('bossSay').textContent = t; }
+function logLine(html){
+  const li = document.createElement('li');
+  li.innerHTML = html;
+  $('logList').appendChild(li);
+  requestAnimationFrame(()=> li.classList.add('show'));
+  while($('logList').children.length > 4) $('logList').removeChild($('logList').firstChild);
+}
+function resetAll(){
+  $('logList').innerHTML = '';
+  $('stamp').classList.remove('show');
+  $('approveEmpty').style.display = '';
+  $('approveItem').style.display = 'none';
+  ['s-adam','s-idris','s-malen','s-leeds'].forEach(id => $(id).textContent = '0');
+  ['riset','banding','produksi','review','analisa','perbaikan'].forEach(s => setChip(s, null));
+  setDept('riset',   {badge:'MENUNGGU', badgeCls:'wait', bubble:'…', count:'0 ide', pct:0});
+  setDept('banding', {badge:'MENUNGGU', badgeCls:'wait', bubble:'…', count:'0 kandidat', pct:0});
+  setDept('produksi',{badge:'MENUNGGU', badgeCls:'wait', bubble:'…', count:'0 kata', pct:0});
+  setDept('review',  {badge:'NEW', badgeCls:'new', bubble:'…', count:'0 kelemahan', pct:0});
+  setDept('analisa', {badge:'MENUNGGU', badgeCls:'wait', bubble:'…', count:'0 angka', pct:0});
+  setDept('perbaikan',{badge:'MENUNGGU', badgeCls:'wait', bubble:'…', count:'0 catatan', pct:0});
+  bossSay('Hari ini juga gas! 💪');
+}
+
+/* Timeline: detik -> aksi */
+const events = [
+ {t:0.0, fn(){
+   bossSay('Hari ini juga gas! 💪');
+   setChip('riset','on');
+   setDept('riset',{cls:'active', badge:'KERJA', bubble:'Lagi cari ide niche & referensi…', count:'12 ide', pct:35});
+   setDept('analisa',{bubble:'Kumpulin angka kemarin…', count:'5 angka', pct:15});
+   logLine('<span class="go">▶</span> Riset: lagi cari ide yang bagus');
+ }},
+ {t:1.8, fn(){
+   setDept('riset',{count:'28 ide', pct:70, bubble:'Banyak yang menarik nih…'});
+   setDept('banding',{bubble:'Nunggu kiriman dari Riset…'});
+ }},
+ {t:3.0, fn(){
+   setDept('riset',{cls:'done', badge:'SELESAI ✓', badgeCls:'done', bubble:'Ketemu 3 ide! Kirim ke Bandingin →', count:'3 ide', pct:100});
+   setChip('riset','done'); setChip('banding','on');
+   setDept('banding',{cls:'active', badge:'KERJA', bubble:'Cek aturan 60%… yang mana lolos?', count:'3 kandidat', pct:55});
+   setDept('analisa',{cls:'done', badge:'SELESAI ✓', badgeCls:'done', bubble:'Angka kemarin udah dirangkum!', count:'36 angka', pct:100});
+   logLine('<span class="ok">✓</span> Riset: 3 ide ketemu, dikirim ke Bandingin');
+ }},
+ {t:4.5, fn(){
+   setDept('banding',{cls:'done', badge:'SELESAI ✓', badgeCls:'done', bubble:'Yang ini paling kuat! Ke Produksi →', count:'1 terpilih', pct:100});
+   setChip('banding','done'); setChip('produksi','on');
+   setDept('produksi',{cls:'active', badge:'KERJA', bubble:'Lagi nulis naskah Nabi Hud…', count:'41 kata', pct:30});
+   setDept('perbaikan',{bubble:'Catet pelajaran dari kemarin…', count:'2 catatan', pct:40});
+   logLine('<span class="ok">✓</span> Bandingin: 1 ide lolos aturan 60%');
+ }},
+ {t:6.0, fn(){
+   setDept('produksi',{count:'96 kata', pct:72, bubble:'Hampir jadi…'});
+   setChip('review','on');
+   setDept('review',{cls:'active', badge:'KERJA', bubble:'Lagi baca naskahnya…', count:'—', pct:45});
+   logLine('<span class="go">▶</span> Reviewer Galak: lagi baca draft');
+ }},
+ {t:7.2, fn(){
+   setDept('produksi',{cls:'rework', badge:'DIBALIKIN ✗', badgeCls:'back', bubble:'Aduh… benerin dulu!', count:'96 kata', pct:72});
+   setDept('review',{cls:'rework', badge:'DIBALIKIN ✗', badgeCls:'back', bubble:'Hook-nya lemah. Ulang!', count:'2 kelemahan', pct:100});
+   bossSay('Sabar… revisi dulu.');
+   logLine('<span class="bad">✗</span> Reviewer: “hook-nya lemah, ulang!”');
+ }},
+ {t:8.6, fn(){
+   setDept('produksi',{cls:'active', badge:'REVISI', bubble:'Udah dibenerin! Kirim lagi…', count:'77 kata', pct:100});
+   setDept('review',{cls:'active', badge:'KERJA', bubble:'Cek ulang… hmm…', count:'0 kelemahan', pct:80});
+   logLine('<span class="go">▶</span> Produksi: draft dibenerin, kirim ulang');
+ }},
+ {t:9.8, fn(){
+   setDept('produksi',{cls:'done', badge:'SELESAI ✓', badgeCls:'done', bubble:'Beres! 77 kata, hook 24/25.'});
+   setDept('review',{cls:'done', badge:'LOLOS ✓', badgeCls:'done', bubble:'……Lolos.', count:'0 kelemahan', pct:100});
+   setChip('produksi','done'); setChip('review','done');
+   $('approveEmpty').style.display = 'none';
+   $('approveItem').style.display = '';
+   $('stamp').classList.add('show');
+   bossSay('APPROVE! ✅');
+   logLine('<span class="ok">✓</span> Reviewer: lolos. Bos: APPROVE!');
+ }},
+ {t:11.0, fn(){
+   setChip('analisa','on'); setChip('perbaikan','on');
+   setDept('analisa',{cls:'active', badge:'KERJA', bubble:'Hitung reaksi video…', count:'48 angka', pct:60});
+   setDept('perbaikan',{cls:'active', badge:'KERJA', bubble:'Besok: hook di 3 detik pertama!', count:'5 catatan', pct:70});
+   logLine('<span class="ok">✓</span> Bos approve → video siap tayang');
+ }},
+ {t:12.2, fn(){
+   setDept('analisa',{cls:'done', badge:'SELESAI ✓', badgeCls:'done', bubble:'Kisah Nabi yang paling rame!', count:'52 angka', pct:100});
+   setDept('perbaikan',{cls:'done', badge:'SELESAI ✓', badgeCls:'done', bubble:'6 catatan buat besok. Gas lagi!', count:'6 catatan', pct:100});
+   setChip('analisa','done'); setChip('perbaikan','done');
+   bossSay('Besok gas lagi! 🔥');
+   countUp('s-adam', 669, 1400);
+   countUp('s-idris', 412, 1400);
+   countUp('s-malen', 80, 1400);
+   countUp('s-leeds', 59, 1400);
+   logLine('<span class="go">▶</span> Analisa → Perbaikan → Riset: ronde besok');
+ }},
+];
+function countUp(id, target, dur){
+  const el = $(id); const t0 = performance.now();
+  (function tick(now){
+    const p = Math.min(1, (now - t0) / dur);
+    el.textContent = Math.round(target * (1 - Math.pow(1 - p, 2)));
+    if(p < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+
+let startTime = performance.now(), fired = new Set(), raf;
+function loop(now){
+  const el = (now - startTime) / 1000;
+  $('loopBar').style.width = Math.min(100, el / 15 * 100) + '%';
+  events.forEach((e, i) => { if(el >= e.t && !fired.has(i)){ fired.add(i); e.fn(); } });
+  if(el >= 15){ startTime = now; fired.clear(); resetAll(); }
+  raf = requestAnimationFrame(loop);
+}
+$('replayBtn').addEventListener('click', () => {
+  cancelAnimationFrame(raf); fired.clear(); resetAll();
+  startTime = performance.now(); raf = requestAnimationFrame(loop);
+});
+resetAll();
+raf = requestAnimationFrame(loop);
+</script>
+</body>
+</html>
